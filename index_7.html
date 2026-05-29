@@ -1,0 +1,1133 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RE/MAX Faro — Reclutamiento</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,sans-serif;background:#f5f5f0;color:#1a1a1a;font-size:14px}
+.app{display:flex;flex-direction:column;height:100vh;overflow:hidden}
+/* QUICKBAR */
+.qb{background:#fff;border-bottom:.5px solid rgba(0,0,0,.1);padding:0 14px;display:flex;align-items:center;gap:3px;height:36px;flex-shrink:0;overflow-x:auto}
+.qb-lbl{font-size:11px;color:#888;margin-right:4px;white-space:nowrap}
+.ql{padding:3px 8px;border-radius:5px;font-size:11px;text-decoration:none;white-space:nowrap;border:none;background:none;cursor:pointer;transition:background .15s}
+.ql:hover{background:#f0f0ea}
+.ql.e{color:#185FA5}.ql.s{color:#534AB7}.ql.w{color:#0F6E56}
+.qd{width:.5px;height:16px;background:rgba(0,0,0,.1);margin:0 2px;flex-shrink:0}
+.online{margin-left:auto;display:flex;align-items:center;gap:4px;font-size:10px;color:#888}
+.dot{width:6px;height:6px;border-radius:50%;background:#ccc}
+/* BODY */
+.body{display:flex;flex:1;overflow:hidden}
+/* SIDEBAR */
+.sb{width:190px;background:#fff;border-right:.5px solid rgba(0,0,0,.1);display:flex;flex-direction:column;flex-shrink:0}
+.sb-logo{padding:12px 14px;border-bottom:.5px solid rgba(0,0,0,.1)}
+.sb-logo-t{font-size:13px;font-weight:600}
+.sb-logo-s{font-size:10px;color:#888;margin-top:1px}
+.sb-nav{padding:6px;flex:1;overflow-y:auto}
+.ni{display:flex;align-items:center;gap:7px;padding:7px 10px;border-radius:6px;cursor:pointer;font-size:12px;color:#666;margin-bottom:1px;transition:all .15s;user-select:none}
+.ni:hover{background:#f0f0ea;color:#1a1a1a}
+.ni.on{background:#e6f1fb;color:#185FA5;font-weight:500}
+.ni svg{width:14px;height:14px;flex-shrink:0}
+.nb{background:#E24B4A;color:#fff;font-size:9px;padding:1px 4px;border-radius:6px;margin-left:auto}
+/* MAIN */
+.main{flex:1;overflow:hidden;display:flex;flex-direction:column}
+.topbar{background:#fff;border-bottom:.5px solid rgba(0,0,0,.1);padding:8px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.tb-t{font-size:14px;font-weight:500}
+.tb-a{display:flex;gap:6px}
+.view{flex:1;overflow-y:auto;padding:16px}
+/* BUTTONS */
+button{cursor:pointer;font-family:inherit;font-size:12px;border-radius:6px;transition:all .15s;border:.5px solid rgba(0,0,0,.15);background:#fff;color:#1a1a1a;padding:6px 12px}
+button:hover{background:#f0f0ea}
+.btn-p{background:#185FA5!important;color:#fff!important;border-color:#185FA5!important}
+.btn-p:hover{background:#0C447C!important}
+.btn-g{background:#1D9E75!important;color:#fff!important;border-color:#1D9E75!important}
+.btn-r{background:#E24B4A!important;color:#fff!important;border-color:#E24B4A!important}
+.btn-sm{padding:4px 8px!important;font-size:11px!important}
+/* STATS */
+.sg{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.sc{background:#f0f0ea;border-radius:8px;padding:12px}
+.sc-l{font-size:11px;color:#888;margin-bottom:3px}
+.sc-v{font-size:22px;font-weight:600}
+.sc-s{font-size:10px;color:#888;margin-top:2px}
+/* PANELS */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.panel{background:#fff;border:.5px solid rgba(0,0,0,.1);border-radius:8px;padding:14px}
+/* CARDS */
+.card{background:#fff;border:.5px solid rgba(0,0,0,.1);border-radius:7px;padding:9px;margin-bottom:7px;cursor:pointer;transition:all .15s}
+.card:hover{border-color:rgba(0,0,0,.25);box-shadow:0 1px 4px rgba(0,0,0,.06)}
+/* TAGS */
+.tag{font-size:10px;padding:2px 7px;border-radius:10px;font-weight:500;white-space:nowrap;display:inline-block}
+/* FORMS */
+.field{margin-bottom:10px}
+.flbl{font-size:11px;color:#666;margin-bottom:3px;font-weight:500;display:block}
+input,select,textarea{width:100%;padding:6px 9px;border:.5px solid rgba(0,0,0,.15);border-radius:6px;background:#fff;color:#1a1a1a;font-size:12px;font-family:inherit;outline:none;transition:border .15s}
+input:focus,select:focus,textarea:focus{border-color:#185FA5}
+textarea{resize:vertical;min-height:55px}
+/* TABS */
+.tabs{display:flex;gap:0;margin-bottom:14px;border-bottom:.5px solid rgba(0,0,0,.1)}
+.tab{padding:7px 13px;font-size:12px;cursor:pointer;color:#666;border-bottom:2px solid transparent;margin-bottom:-.5px;transition:all .15s;white-space:nowrap}
+.tab:hover{color:#1a1a1a}
+.tab.on{color:#185FA5;border-bottom-color:#185FA5;font-weight:500}
+/* MODAL */
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:1000;padding:16px}
+.modal{background:#fff;border-radius:12px;border:.5px solid rgba(0,0,0,.1);width:680px;max-width:100%;max-height:92vh;overflow-y:auto}
+.mh{padding:14px 18px;border-bottom:.5px solid rgba(0,0,0,.1);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#fff;z-index:1}
+.mh-t{font-size:14px;font-weight:500}
+.mb{padding:16px 18px}
+.mf{padding:10px 18px;border-top:.5px solid rgba(0,0,0,.1);display:flex;justify-content:flex-end;gap:8px;position:sticky;bottom:0;background:#fff}
+/* KANBAN */
+.kanban{display:flex;gap:10px;overflow-x:auto;padding-bottom:8px;min-height:200px}
+.kcol{min-width:175px;flex-shrink:0;display:flex;flex-direction:column}
+.kh{padding:7px 10px;border-radius:6px 6px 0 0;font-size:11px;font-weight:500;display:flex;align-items:center;justify-content:space-between}
+.kb{background:#f0f0ea;border-radius:0 0 6px 6px;padding:7px;flex:1;min-height:80px}
+.kcard{background:#fff;border:.5px solid rgba(0,0,0,.1);border-radius:5px;padding:7px;margin-bottom:6px;cursor:pointer;font-size:11px}
+.kcard:hover{border-color:rgba(0,0,0,.25)}
+/* MAP */
+.mw{display:flex;flex-direction:column;height:100%}
+.mtb{background:#fff;border-bottom:.5px solid rgba(0,0,0,.1);padding:7px 12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex-shrink:0}
+.seg{display:flex;border:.5px solid rgba(0,0,0,.15);border-radius:5px;overflow:hidden}
+.seg button{border:none;border-radius:0;padding:4px 10px;font-size:11px;background:#fff;color:#666}
+.seg button.on{background:#185FA5;color:#fff}
+.mst{position:absolute;top:8px;right:8px;background:#fff;border:.5px solid rgba(0,0,0,.1);border-radius:7px;padding:8px 12px;z-index:1000;font-size:11px;min-width:130px}
+.mleg{position:absolute;bottom:20px;left:8px;background:#fff;border:.5px solid rgba(0,0,0,.1);border-radius:7px;padding:9px;z-index:1000;font-size:10px;max-width:155px}
+.li{display:flex;align-items:center;gap:5px;margin-bottom:4px}
+.ld{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+/* MISC */
+.st{font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px;padding-bottom:6px;border-bottom:.5px solid rgba(0,0,0,.1)}
+.brow{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:11px}
+.bl{width:110px;color:#666;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px}
+.bt{flex:1;height:5px;background:#e0e0da;border-radius:3px;overflow:hidden}
+.bf{height:100%;border-radius:3px}
+.bv{font-size:10px;color:#888;width:22px;text-align:right}
+.ti{display:flex;align-items:flex-start;gap:8px;padding:8px 10px;background:#f0f0ea;border-radius:6px;font-size:12px;margin-bottom:6px}
+.aib{background:#e6f1fb;border:.5px solid #b5d4f4;border-radius:6px;padding:10px;margin-bottom:12px;font-size:12px;color:#185FA5}
+.sp{display:inline-block;width:13px;height:13px;border:2px solid rgba(0,0,0,.1);border-top-color:#185FA5;border-radius:50%;animation:sp .8s linear infinite;vertical-align:middle;margin-right:4px}
+@keyframes sp{to{transform:rotate(360deg)}}
+.toast{position:fixed;bottom:20px;right:20px;background:#1a1a1a;color:#fff;padding:10px 16px;border-radius:8px;font-size:12px;z-index:9999;animation:tin .3s;max-width:300px}
+@keyframes tin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.nota-i{padding:7px 9px;background:#f0f0ea;border-radius:6px;margin-bottom:5px;font-size:12px}
+.nota-m{font-size:10px;color:#888;margin-bottom:2px}
+.mb-bar{height:8px;background:#e0e0da;border-radius:4px;overflow:hidden;margin:6px 0}
+.mb-fill{height:100%;border-radius:4px;transition:width .5s}
+.cv-drop{border:1.5px dashed rgba(0,0,0,.15);border-radius:8px;padding:24px;text-align:center;cursor:pointer;background:#f0f0ea;transition:border .15s}
+.cv-drop:hover{border-color:#185FA5;background:#e6f1fb}
+.cv-bar{display:flex;align-items:center;justify-content:space-between;padding:7px 10px;background:#f0f0ea;border-bottom:.5px solid rgba(0,0,0,.1);font-size:12px}
+.hidden{display:none!important}
+.flex{display:flex;gap:8px;align-items:center}
+.fwrap{flex-wrap:wrap}
+.ml-auto{margin-left:auto}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- QUICKBAR -->
+<div class="qb">
+  <span class="qb-lbl">Accesos:</span>
+  <a class="ql e" href="https://www.computrabajo.com.ar" target="_blank">Computrabajo</a>
+  <a class="ql e" href="https://www.zonajobs.com.ar" target="_blank">ZonaJobs</a>
+  <a class="ql e" href="https://www.bumeran.com.ar" target="_blank">Bumeran</a>
+  <div class="qd"></div>
+  <a class="ql e" href="https://www.linkedin.com/jobs" target="_blank">LinkedIn</a>
+  <div class="qd"></div>
+  <a class="ql s" href="https://www.instagram.com" target="_blank" id="lnk-ig">Instagram</a>
+  <a class="ql s" href="https://www.facebook.com" target="_blank" id="lnk-fb">Facebook</a>
+  <div class="qd"></div>
+  <a class="ql w" href="https://web.whatsapp.com" target="_blank">WhatsApp Web</a>
+  <div class="online">
+    <div class="dot" id="dot"></div>
+    <span id="online-t">Conectando...</span>
+  </div>
+</div>
+
+<!-- BODY -->
+<div class="body">
+
+<!-- SIDEBAR -->
+<div class="sb">
+  <div class="sb-logo">
+    <div class="sb-logo-t">RE/MAX Faro</div>
+    <div class="sb-logo-s">Sistema de Reclutamiento</div>
+  </div>
+  <nav class="sb-nav">
+    <div class="ni on" onclick="gv('dashboard',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Dashboard
+    </div>
+    <div class="ni" onclick="gv('pipeline',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+      Pipeline
+    </div>
+    <div class="ni" onclick="gv('candidatos',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Candidatos <span class="nb" id="nb-c">0</span>
+    </div>
+    <div class="ni" onclick="gv('mapa',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      Mapa
+    </div>
+    <div class="ni" onclick="gv('toques',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      Toques <span class="nb" id="nb-t">0</span>
+    </div>
+    <div class="ni" onclick="gv('perfil',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M2 20a10 10 0 0 1 20 0"/></svg>
+      Perfil ideal
+    </div>
+    <div class="ni" onclick="gv('estadisticas',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      Estadísticas
+    </div>
+    <div class="ni" onclick="gv('config',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M12 2v2M12 20v2M20 12h2M2 12h2M19.07 19.07l-1.41-1.41M4.93 19.07l1.41-1.41"/></svg>
+      Configuración
+    </div>
+  </nav>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div class="tb-t" id="page-t">Dashboard</div>
+    <div class="tb-a">
+      <button onclick="openNuevo()">+ Nuevo candidato</button>
+      <button class="btn-p" onclick="sync()">↻ Sincronizar</button>
+    </div>
+  </div>
+  <div class="view" id="view">
+
+    <!-- DASHBOARD -->
+    <div id="v-dashboard">
+      <div class="sg">
+        <div class="sc"><div class="sc-l">Total candidatos</div><div class="sc-v" id="s-tot">—</div><div class="sc-s">En base de datos</div></div>
+        <div class="sc"><div class="sc-l">Nuevo ingreso</div><div class="sc-v" id="s-nue" style="color:#185FA5">—</div><div class="sc-s">Sin contactar</div></div>
+        <div class="sc"><div class="sc-l">En proceso</div><div class="sc-v" id="s-pro" style="color:#1D9E75">—</div><div class="sc-s">Contactados activos</div></div>
+        <div class="sc"><div class="sc-l">Incorporados</div><div class="sc-v" id="s-inc" style="color:#1D9E75">—</div><div class="sc-s">Gestores activos</div></div>
+      </div>
+      <div class="g2" style="margin-bottom:12px">
+        <div class="panel"><div class="st">Top barrios</div><div id="d-barrios"></div></div>
+        <div class="panel"><div class="st">Toques pendientes hoy</div><div id="d-toq-hoy"></div></div>
+      </div>
+      <div class="g2">
+        <div class="panel"><div class="st">Pipeline por etapa</div><div id="d-etapas"></div></div>
+        <div class="panel"><div class="st">Profesiones frecuentes</div><div id="d-profs"></div></div>
+      </div>
+    </div>
+
+    <!-- PIPELINE -->
+    <div id="v-pipeline" class="hidden">
+      <div class="kanban" id="kanban"></div>
+    </div>
+
+    <!-- CANDIDATOS -->
+    <div id="v-candidatos" class="hidden">
+      <div class="flex fwrap" style="margin-bottom:12px;gap:6px">
+        <input id="sq" placeholder="Buscar nombre, profesión, barrio..." style="max-width:250px" oninput="rlista()">
+        <select id="se" onchange="rlista()">
+          <option value="">Todas las etapas</option>
+          <option>Nuevo ingreso</option><option>Primer contacto</option><option>Segundo contacto</option>
+          <option>Entrevista</option><option>Seguimiento</option><option>Incorporado</option><option>Descartado</option>
+        </select>
+        <select id="sc2" onchange="rlista()">
+          <option value="">Todas las ciudades</option>
+          <option>Santa Fe</option><option>Santo Tomé</option><option>Recreo</option><option>Esperanza</option><option>San Justo</option>
+        </select>
+        <select id="sr" onchange="rlista()">
+          <option value="">Todos los responsables</option>
+          <option>Alejandro</option><option>Florencia</option><option>Diego</option><option>Natalia</option>
+        </select>
+        <span id="s-count" class="ml-auto" style="font-size:11px;color:#888"></span>
+      </div>
+      <div id="lista"></div>
+    </div>
+
+    <!-- MAPA -->
+    <div id="v-mapa" class="hidden" style="height:calc(100vh - 112px);margin:-16px;position:relative">
+      <div class="mw">
+        <div class="mtb">
+          <b style="font-size:12px">Vista:</b>
+          <div class="seg">
+            <button class="on" id="mv-e" onclick="smv('etapa',this)">Etapa</button>
+            <button id="mv-p" onclick="smv('prof',this)">Profesión</button>
+            <button id="mv-r" onclick="smv('resp',this)">Responsable</button>
+          </div>
+          <button class="btn-sm" id="btn-zona" onclick="tZona()">✏ Dibujar zona</button>
+          <button class="btn-sm" onclick="bZonas()" style="color:#E24B4A;border-color:#E24B4A">✕ Borrar zonas</button>
+          <span style="font-size:11px;color:#888" id="zona-c">0 zonas · <small>clic = punto · doble clic = cerrar</small></span>
+        </div>
+        <div style="position:relative;flex:1">
+          <div id="map" style="width:100%;height:100%"></div>
+          <div class="mst" id="mst"></div>
+          <div class="mleg" id="mleg"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TOQUES -->
+    <div id="v-toques" class="hidden">
+      <div class="tabs">
+        <div class="tab on" onclick="stTab('hoy',this)">Hoy</div>
+        <div class="tab" onclick="stTab('semana',this)">Próximos 7 días</div>
+        <div class="tab" onclick="stTab('cumplea',this)">Cumpleaños</div>
+        <div class="tab" onclick="stTab('cal',this)">Calendario</div>
+      </div>
+      <div id="toq-c"></div>
+    </div>
+
+    <!-- PERFIL -->
+    <div id="v-perfil" class="hidden">
+      <div class="panel" style="max-width:580px">
+        <div class="aib">🎯 Este perfil es usado por la IA para calcular el % de compatibilidad. Los cambios se guardan en la base de datos y aplican a todos los usuarios.</div>
+        <div class="st">Descripción del gestor ideal</div>
+        <div class="field"><textarea id="pi-desc" rows="5"></textarea></div>
+        <div class="st" style="margin-top:14px">Criterios de evaluación (deben sumar exactamente 100%)</div>
+        <div id="pi-crit"></div>
+        <div class="flex" style="margin-top:8px;gap:8px">
+          <button style="font-size:11px" onclick="addCrit()">+ Agregar criterio</button>
+          <span id="pi-suma" style="font-size:11px;color:#888"></span>
+        </div>
+        <div class="flex" style="margin-top:14px;gap:8px">
+          <button class="btn-p" onclick="guardarPerfil()">✓ Guardar perfil</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ESTADÍSTICAS -->
+    <div id="v-estadisticas" class="hidden">
+      <div class="g2" style="margin-bottom:12px">
+        <div class="panel"><div class="st">Por etapa</div><div id="e-et"></div></div>
+        <div class="panel"><div class="st">Por ciudad</div><div id="e-ci"></div></div>
+      </div>
+      <div class="g2">
+        <div class="panel"><div class="st">Canales de origen</div><div id="e-ca"></div></div>
+        <div class="panel"><div class="st">Match IA — distribución</div><div id="e-ma"></div></div>
+      </div>
+    </div>
+
+    <!-- CONFIG -->
+    <div id="v-config" class="hidden">
+      <div class="panel" style="max-width:500px">
+        <div class="st">Links y accesos rápidos</div>
+        <p style="font-size:12px;color:#666;margin-bottom:12px">Configurá los links que aparecen en la barra superior. Se guardan en este navegador.</p>
+        <div class="field"><label class="flbl">URL Instagram RE/MAX Faro</label><input id="cfg-ig" placeholder="https://instagram.com/remaxfaro.ar"></div>
+        <div class="field"><label class="flbl">URL Facebook RE/MAX Faro</label><input id="cfg-fb" placeholder="https://facebook.com/remaxfaro"></div>
+        <div class="field"><label class="flbl">Número WhatsApp reclutamiento</label><input id="cfg-wa" placeholder="3424475492"></div>
+        <div class="field"><label class="flbl">URL formulario Google Forms</label><input id="cfg-gf" placeholder="https://forms.gle/..."></div>
+        <button class="btn-p" onclick="guardarCfg()" style="margin-top:8px">Guardar configuración</button>
+        <div class="st" style="margin-top:20px">Equipo RE/MAX Faro</div>
+        <div style="font-size:12px;color:#666">
+          <div style="padding:6px 0;border-bottom:.5px solid rgba(0,0,0,.08)">🔵 Diego Scolari — Administrador</div>
+          <div style="padding:6px 0;border-bottom:.5px solid rgba(0,0,0,.08)">🔵 Natalia Lopez — Administrador</div>
+          <div style="padding:6px 0;border-bottom:.5px solid rgba(0,0,0,.08)">🟢 Alejandro — Coordinador de reclutamiento</div>
+          <div style="padding:6px 0">🟡 Florencia Quiroga — Asistente</div>
+        </div>
+        <div class="st" style="margin-top:20px">Datos del proyecto</div>
+        <div style="font-size:11px;color:#888;line-height:1.8">
+          <div>📡 Supabase: ohythwsikexcdqfmxevo</div>
+          <div>🌐 URL app: faro-reclutamiento.vercel.app</div>
+          <div>📦 GitHub: dscolari-prog/faro-reclutamiento</div>
+          <div>🎯 Meta: 45 gestores activos</div>
+          <div>📋 Formulario: <a href="https://forms.gle/j3iUbRf3yyHZFXFv5" target="_blank" style="color:#185FA5">forms.gle/j3iUbRf3yyHZFXFv5</a></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+</div>
+
+<!-- MODAL CANDIDATO -->
+<div class="ov hidden" id="m-cand">
+<div class="modal">
+  <div class="mh">
+    <div class="mh-t" id="mc-t">Candidato</div>
+    <button onclick="cm('m-cand')" style="border:none;background:none;font-size:18px;color:#888;padding:0">✕</button>
+  </div>
+  <div class="mb">
+    <div class="tabs" id="mc-tabs">
+      <div class="tab on" onclick="setMT('datos',this)">Datos</div>
+      <div class="tab" onclick="setMT('cv',this)">CV <span id="cv-ind" class="hidden" style="width:6px;height:6px;background:#1D9E75;border-radius:50%;display:inline-block;vertical-align:middle;margin-left:2px"></span></div>
+      <div class="tab" onclick="setMT('match',this)">Match IA</div>
+      <div class="tab" onclick="setMT('notas',this)">Notas</div>
+      <div class="tab" onclick="setMT('toqc',this)">Toques</div>
+    </div>
+
+    <!-- TAB DATOS -->
+    <div id="mt-datos">
+      <div class="st">Información personal</div>
+      <div class="g2"><div class="field"><label class="flbl">Nombre *</label><input id="f-nombre"></div><div class="field"><label class="flbl">Fecha de nacimiento</label><input id="f-nac" type="date"></div></div>
+      <div class="g2"><div class="field"><label class="flbl">Teléfono / WhatsApp</label><input id="f-tel" placeholder="3424XXXXXX"></div><div class="field"><label class="flbl">Email</label><input id="f-email"></div></div>
+      <div class="g2"><div class="field"><label class="flbl">Ciudad</label><input id="f-ciudad" placeholder="Santa Fe"></div><div class="field"><label class="flbl">Barrio</label><input id="f-barrio"></div></div>
+      <div class="g2"><div class="field"><label class="flbl">Profesión / Ocupación</label><input id="f-prof"></div><div class="field"><label class="flbl">Edad</label><input id="f-edad" type="number" min="18"></div></div>
+      <div class="g2"><div class="field"><label class="flbl">Grupo familiar</label><input id="f-familia" placeholder="ej: casado, 2 hijos"></div><div class="field"><label class="flbl">Vehículo propio</label><select id="f-vehiculo"><option value="">No especificado</option><option>Sí</option><option>No</option></select></div></div>
+      <div class="g2"><div class="field"><label class="flbl">Instagram</label><input id="f-ig" placeholder="@usuario"></div><div class="field"><label class="flbl">LinkedIn</label><input id="f-li" placeholder="linkedin.com/in/..."></div></div>
+      <div class="field"><label class="flbl">Comentario del formulario</label><textarea id="f-comentario" rows="2"></textarea></div>
+      <div class="st" style="margin-top:14px">Gestión del proceso</div>
+      <div class="g3">
+        <div class="field"><label class="flbl">Canal</label><select id="f-canal"><option>Web propia</option><option>Instagram/Facebook</option><option>LinkedIn</option><option>Referido</option><option>ZonaJobs</option><option>Bumeran</option><option>Computrabajo</option><option>Puerta</option></select></div>
+        <div class="field"><label class="flbl">Etapa</label><select id="f-etapa"><option>Nuevo ingreso</option><option>Primer contacto</option><option>Segundo contacto</option><option>Entrevista</option><option>Seguimiento</option><option>Incorporado</option><option>Descartado</option></select></div>
+        <div class="field"><label class="flbl">Responsable</label><select id="f-resp"><option>Florencia</option><option>Alejandro</option><option>Diego</option><option>Natalia</option></select></div>
+      </div>
+    </div>
+
+    <!-- TAB CV -->
+    <div id="mt-cv" class="hidden">
+      <div id="cv-up">
+        <div class="cv-drop" onclick="document.getElementById('cv-file').click()" ondragover="event.preventDefault()" ondrop="hCVDrop(event)">
+          <div style="font-size:32px;margin-bottom:8px">📄</div>
+          <div style="font-size:13px;font-weight:500;margin-bottom:4px">Arrastrá el CV o hacé clic para seleccionar</div>
+          <div style="font-size:11px;color:#888">PDF o imagen (JPG, PNG) — máx 10MB</div>
+        </div>
+        <input type="file" id="cv-file" accept=".pdf,image/*" class="hidden" onchange="hCVFile(this.files[0])">
+      </div>
+      <div id="cv-loaded" class="hidden">
+        <div style="border:.5px solid rgba(0,0,0,.1);border-radius:8px;overflow:hidden">
+          <div class="cv-bar">
+            <span>📄 <span id="cv-fn">curriculum.pdf</span></span>
+            <div class="flex" style="gap:6px">
+              <button class="btn-sm" onclick="dlCV()">⬇ Descargar</button>
+              <button class="btn-sm" onclick="ampCV()">⤢ Ampliar</button>
+              <button class="btn-sm" onclick="delCV()" style="color:#E24B4A;border-color:#E24B4A">✕ Eliminar</button>
+            </div>
+          </div>
+          <div id="cv-view" style="width:100%;height:360px;background:#f0f0ea;display:flex;align-items:center;justify-content:center"></div>
+        </div>
+        <div class="aib" style="margin-top:10px" id="cv-ai-st">🤖 <b>Análisis IA disponible</b> — La IA puede leer el CV, completar los datos y calcular el match automáticamente.</div>
+        <button class="btn-p" id="btn-acv" onclick="analizarCV()">🔍 Analizar CV con IA</button>
+      </div>
+    </div>
+
+    <!-- TAB MATCH -->
+    <div id="mt-match" class="hidden">
+      <div class="aib">🎯 Compatibilidad calculada contra el perfil ideal de gestor de RE/MAX Faro Santa Fe.</div>
+      <div id="match-c">
+        <div style="text-align:center;padding:20px;color:#888;font-size:13px">Analizá con IA para obtener el % de compatibilidad y recomendaciones personalizadas.</div>
+        <button class="btn-p" style="display:block;margin:0 auto" onclick="analizarManual()">🤖 Analizar con IA</button>
+      </div>
+      <div id="match-r" class="hidden"></div>
+    </div>
+
+    <!-- TAB NOTAS -->
+    <div id="mt-notas" class="hidden">
+      <div class="field"><label class="flbl">Nueva nota</label><textarea id="n-nota" rows="3" placeholder="Observación sobre este candidato..."></textarea><button style="margin-top:6px;font-size:11px" onclick="addNota()">+ Guardar nota</button></div>
+      <div id="notas-l" style="margin-top:10px"></div>
+    </div>
+
+    <!-- TAB TOQUES CANDIDATO -->
+    <div id="mt-toqc" class="hidden">
+      <div class="aib">💬 Mensajes personalizados listos para enviar por WhatsApp al candidato.</div>
+      <div id="toqc-l"></div>
+    </div>
+  </div>
+  <div class="mf">
+    <button onclick="cm('m-cand')">Cancelar</button>
+    <button onclick="abrirWA(document.getElementById('f-tel').value,'Hola '+document.getElementById('f-nombre').value.split(' ')[0]+'! Te contactamos desde RE/MAX Faro.')" style="color:#0F6E56;border-color:#0F6E56">📲 WhatsApp</button>
+    <button class="btn-g" onclick="guardarCand()">✓ Guardar</button>
+  </div>
+</div>
+</div>
+
+<!-- MODAL CV AMPLIADO -->
+<div class="ov hidden" id="m-cv">
+<div class="modal" style="width:840px;max-height:96vh">
+  <div class="mh">
+    <div class="mh-t" id="cv-amp-t">CV</div>
+    <div class="flex" style="gap:8px">
+      <button class="btn-sm" onclick="dlCV()">⬇ Descargar</button>
+      <button onclick="cm('m-cv')" style="border:none;background:none;font-size:18px;padding:0;color:#888">✕</button>
+    </div>
+  </div>
+  <div id="cv-amp-c" style="height:88vh;overflow:auto"></div>
+</div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// ============================================================
+//  SUPABASE
+// ============================================================
+const SB_URL='https://ohythwsikexcdqfmxevo.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9oeXRod3Npa2V4Y2RxZm14ZXZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAwODE0NDgsImV4cCI6MjA5NTY1NzQ0OH0._oOgcnaEj7J9uFNSbA260jSBaufXPbu_oUzJnIMhb2A';
+const sb=supabase.createClient(SB_URL,SB_KEY);
+
+// ============================================================
+//  CONSTANTES
+// ============================================================
+const ET=['Nuevo ingreso','Primer contacto','Segundo contacto','Entrevista','Seguimiento','Incorporado','Descartado'];
+const EC={'Nuevo ingreso':'#185FA5','Primer contacto':'#0F6E56','Segundo contacto':'#854F0B','Entrevista':'#534AB7','Seguimiento':'#EF9F27','Incorporado':'#1D9E75','Descartado':'#888780'};
+const EB={'Nuevo ingreso':'#e6f1fb','Primer contacto':'#e1f5ee','Segundo contacto':'#faeeda','Entrevista':'#eeedfe','Seguimiento':'#faeeda','Incorporado':'#eaf3de','Descartado':'#f1efe8'};
+const RC={'Alejandro':'#534AB7','Florencia':'#0F6E56','Diego':'#185FA5','Natalia':'#854F0B'};
+const FECHAS=[
+  {f:'03-08',n:'Día Internacional de la Mujer',e:'💜'},
+  {f:'05-01',n:'Día del Trabajador',e:'✊'},
+  {f:'05-26',n:'Día del Corredor Inmobiliario',e:'🏠'},
+  {f:'06-15',n:'Día del Padre',e:'👨'},
+  {f:'07-20',n:'Día del Amigo',e:'🤝'},
+  {f:'08-10',n:'Kids Tour RE/MAX Faro',e:'🎉'},
+  {f:'08-25',n:'Día del Emprendedor',e:'🚀'},
+  {f:'09-11',n:'Día del Maestro',e:'📝'},
+  {f:'10-19',n:'Día de la Madre',e:'💐'},
+  {f:'12-24',n:'Nochebuena',e:'🎄'},
+  {f:'12-31',n:'Fin de año',e:'🥂'},
+];
+
+// ============================================================
+//  STATE
+// ============================================================
+let CANDS=[], PI={
+  desc:'Buscamos personas con excelentes habilidades de comunicación y negociación, capacidad de autogestión y trabajo independiente. Preferentemente con experiencia en ventas, atención al cliente o emprendimientos. Motivación por ingresos variables. Tolerancia a la incertidumbre y disposición para capacitarse continuamente.',
+  criterios:[
+    {d:'Experiencia en ventas o atención al cliente',p:25},
+    {d:'Habilidades de comunicación y negociación',p:25},
+    {d:'Autogestión y trabajo independiente',p:20},
+    {d:'Motivación por comisiones y emprendimiento',p:15},
+    {d:'Tolerancia a la incertidumbre y cambios',p:15}
+  ]
+};
+let EID=null, CV=null, CV_DATA=null;
+let MAP=null, MMARKERS=[], MVISTA='etapa', ZONAS=[], DIBUJ=false, PTS=[], PTL=null;
+let TQTAB='hoy', CURVIEW='dashboard';
+
+// ============================================================
+//  INIT
+// ============================================================
+async function init(){
+  await sync();
+  await loadPI();
+  loadCfg();
+  sb.channel('rt-cands')
+    .on('postgres_changes',{event:'*',schema:'public',table:'candidatos'},async()=>{
+      await sync();
+      toast('📡 Actualizado en tiempo real');
+    })
+    .subscribe(s=>{
+      if(s==='SUBSCRIBED'){
+        document.getElementById('dot').style.background='#1D9E75';
+        document.getElementById('online-t').textContent='En línea · tiempo real';
+      }
+    });
+}
+
+async function sync(){
+  const{data,error}=await sb.from('candidatos').select('*').order('created_at',{ascending:false});
+  if(error){console.error(error);return;}
+  CANDS=data||[];
+  document.getElementById('nb-c').textContent=CANDS.length;
+  document.getElementById('nb-t').textContent=getTH().length;
+  if(CURVIEW==='dashboard')rDash();
+  else if(CURVIEW==='pipeline')rPipeline();
+  else if(CURVIEW==='candidatos')rlista();
+  else if(CURVIEW==='mapa'&&MAP)rMarkers();
+  else if(CURVIEW==='estadisticas')rEstad();
+  else if(CURVIEW==='toques')rToques();
+}
+
+async function loadPI(){
+  const{data}=await sb.from('perfil_ideal').select('*').limit(1).single();
+  if(data){PI.desc=data.descripcion||PI.desc;PI.criterios=data.criterios||PI.criterios;}
+}
+
+function toast(msg,dur=3200){
+  const t=document.createElement('div');t.className='toast';t.textContent=msg;
+  document.body.appendChild(t);setTimeout(()=>t.remove(),dur);
+}
+
+// ============================================================
+//  NAVEGACIÓN
+// ============================================================
+function gv(v,el){
+  CURVIEW=v;
+  document.querySelectorAll('.ni').forEach(n=>n.classList.remove('on'));
+  if(el)el.classList.add('on');
+  const tt={dashboard:'Dashboard',pipeline:'Pipeline de candidatos',candidatos:`Candidatos (${CANDS.length})`,mapa:'Mapa — Gran Santa Fe',toques:'Toques de fidelización',perfil:'Perfil ideal del gestor',estadisticas:'Estadísticas',config:'Configuración'};
+  document.getElementById('page-t').textContent=tt[v]||v;
+  document.querySelectorAll('[id^="v-"]').forEach(x=>x.classList.add('hidden'));
+  document.getElementById('v-'+v).classList.remove('hidden');
+  const view=document.getElementById('view');
+  view.style.overflow=v==='mapa'?'hidden':'auto';
+  view.style.padding=v==='mapa'?'0':'16px';
+  if(v==='dashboard')rDash();
+  else if(v==='pipeline')rPipeline();
+  else if(v==='candidatos')rlista();
+  else if(v==='mapa')initMap();
+  else if(v==='toques')rToques();
+  else if(v==='perfil')rPerfil();
+  else if(v==='estadisticas')rEstad();
+  else if(v==='config')rCfg();
+}
+
+// ============================================================
+//  DASHBOARD
+// ============================================================
+function rDash(){
+  document.getElementById('s-tot').textContent=CANDS.length;
+  document.getElementById('s-nue').textContent=CANDS.filter(c=>c.etapa==='Nuevo ingreso').length;
+  document.getElementById('s-pro').textContent=CANDS.filter(c=>!['Nuevo ingreso','Incorporado','Descartado'].includes(c.etapa)).length;
+  document.getElementById('s-inc').textContent=CANDS.filter(c=>c.etapa==='Incorporado').length;
+  // Barrios
+  const B={};CANDS.forEach(c=>{if(c.barrio)B[c.barrio]=(B[c.barrio]||0)+1});
+  const bTop=Object.entries(B).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const bM=bTop[0]?bTop[0][1]:1;
+  document.getElementById('d-barrios').innerHTML=bTop.length?bTop.map(([k,v])=>`<div class="brow"><div class="bl">${k}</div><div class="bt"><div class="bf" style="width:${Math.round(v/bM*100)}%;background:#185FA5"></div></div><div class="bv">${v}</div></div>`).join(''):'<span style="color:#888;font-size:12px">Sin datos</span>';
+  // Toques hoy
+  const th=getTH();
+  document.getElementById('d-toq-hoy').innerHTML=th.length?th.slice(0,5).map(t=>`<div class="ti"><div style="flex:1"><b>${t.c}</b> — ${t.m}<br><span style="color:#888;font-size:11px">${t.tel}</span></div><button class="btn-sm" onclick="aWA('${t.tel}','${t.msg}')">📲</button></div>`).join(''):'<span style="color:#888;font-size:12px">Sin toques para hoy</span>';
+  // Etapas
+  const et={};ET.forEach(e=>{et[e]=CANDS.filter(c=>c.etapa===e).length});
+  document.getElementById('d-etapas').innerHTML=ET.map(e=>`<div class="brow"><div class="bl">${e}</div><div class="bt"><div class="bf" style="width:${CANDS.length?Math.round((et[e]||0)/CANDS.length*100):0}%;background:${EC[e]}"></div></div><div class="bv">${et[e]||0}</div></div>`).join('');
+  // Profesiones
+  const P={};
+  CANDS.forEach(c=>{
+    const p=(c.prof||'').toLowerCase();
+    const k=p.includes('estudiante')?'Estudiante':p.includes('docente')||p.includes('maestra')||p.includes('profesor')?'Docente':p.includes('vend')||p.includes('aten')||p.includes('comerci')?'Ventas/Atención':p.includes('admin')?'Administración':p.includes('emprend')?'Emprendedor':p.includes('abog')||p.includes('derecho')?'Derecho':p.includes('arquitect')?'Arquitectura':'Otros';
+    P[k]=(P[k]||0)+1;
+  });
+  const pTop=Object.entries(P).sort((a,b)=>b[1]-a[1]).slice(0,7);
+  const pM=pTop[0]?pTop[0][1]:1;
+  document.getElementById('d-profs').innerHTML=pTop.map(([k,v])=>`<div class="brow"><div class="bl">${k}</div><div class="bt"><div class="bf" style="width:${Math.round(v/pM*100)}%;background:#534AB7"></div></div><div class="bv">${v}</div></div>`).join('');
+}
+
+// ============================================================
+//  PIPELINE
+// ============================================================
+function rPipeline(){
+  document.getElementById('kanban').innerHTML=ET.map(e=>{
+    const cs=CANDS.filter(c=>c.etapa===e);
+    return`<div class="kcol"><div class="kh" style="background:${EB[e]};color:${EC[e]}">${e}<span style="font-weight:400">${cs.length}</span></div><div class="kb">${cs.map(c=>`<div class="kcard" onclick="openC(${c.id})"><b style="display:block;margin-bottom:2px">${c.nombre}</b><span style="color:#888">${(c.prof||'').substring(0,26)}</span><br><span style="color:#aaa;font-size:10px">${c.barrio||''}</span>${c.match>0?`<br><span class="tag" style="background:${EB.Entrevista};color:${EC.Entrevista};margin-top:3px">${c.match}% match</span>`:''}</div>`).join('')}</div></div>`;
+  }).join('');
+}
+
+// ============================================================
+//  LISTA CANDIDATOS
+// ============================================================
+function rlista(){
+  const q=(document.getElementById('sq').value||'').toLowerCase();
+  const fe=document.getElementById('se').value;
+  const fc=document.getElementById('sc2').value;
+  const fr=document.getElementById('sr').value;
+  let L=CANDS.filter(c=>{
+    if(q&&!(c.nombre+' '+(c.prof||'')+' '+(c.barrio||'')+' '+(c.ciudad||'')).toLowerCase().includes(q))return false;
+    if(fe&&c.etapa!==fe)return false;
+    if(fc&&!(c.ciudad||'').toLowerCase().includes(fc.toLowerCase()))return false;
+    if(fr&&c.resp!==fr)return false;
+    return true;
+  });
+  document.getElementById('s-count').textContent=`${L.length} de ${CANDS.length}`;
+  document.getElementById('lista').innerHTML=L.length?L.map(c=>`
+    <div class="card flex" style="gap:10px" onclick="openC(${c.id})">
+      <div style="width:34px;height:34px;border-radius:50%;background:${EB[c.etapa]||'#e6f1fb'};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:${EC[c.etapa]||'#185FA5'};flex-shrink:0">${(c.nombre||'?').split(' ').map(x=>x[0]||'').join('').substring(0,2).toUpperCase()}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:500">${c.nombre}</div>
+        <div style="font-size:11px;color:#888">${(c.prof||'—').substring(0,40)} · ${c.barrio||''} · ${c.ciudad||''}</div>
+      </div>
+      <div class="flex fwrap" style="gap:4px;flex-shrink:0;justify-content:flex-end;max-width:230px">
+        <span class="tag" style="background:${EB[c.etapa]||'#f0f0f0'};color:${EC[c.etapa]||'#666'}">${c.etapa||'—'}</span>
+        <span class="tag" style="background:#f0f0ea;color:#666">${c.canal||'Web'}</span>
+        ${c.match>0?`<span class="tag" style="background:#eeedfe;color:#534AB7">${c.match}%</span>`:''}
+        ${c.cv_nombre?`<span class="tag" style="background:#eaf3de;color:#1D9E75">CV</span>`:''}
+        ${c.comentario?`<span class="tag" style="background:#faeeda;color:#854F0B">Comentó</span>`:''}
+      </div>
+      <button class="btn-sm" onclick="event.stopPropagation();aWA('${c.tel||''}','Hola ${(c.nombre||'').split(' ')[0]}, te contactamos desde RE/MAX Faro 🏠')" style="flex-shrink:0">📲</button>
+    </div>`).join(''):'<div style="text-align:center;padding:32px;color:#888;font-size:13px">No se encontraron candidatos</div>';
+}
+
+// ============================================================
+//  MAPA
+// ============================================================
+function initMap(){
+  if(MAP){MAP.invalidateSize();rMarkers();return;}
+  setTimeout(()=>{
+    MAP=L.map('map').setView([-31.63,-60.71],11);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OSM',maxZoom:18}).addTo(MAP);
+    L.circle([-31.63,-60.71],{radius:80000,color:'#185FA5',weight:1,dashArray:'5 4',fillColor:'#185FA5',fillOpacity:.03,interactive:false}).addTo(MAP);
+    L.marker([-31.629,-60.700],{icon:L.divIcon({className:'',html:'<div style="background:#E24B4A;color:#fff;padding:3px 8px;border-radius:4px;font-size:10px;font-weight:600;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,.3)">📍 RE/MAX Faro</div>',iconAnchor:[50,10]})}).addTo(MAP);
+    MAP.on('click',e=>{
+      if(!DIBUJ)return;
+      PTS.push([e.latlng.lat,e.latlng.lng]);
+      if(PTL)MAP.removeLayer(PTL);
+      if(PTS.length>=2)PTL=L.polygon(PTS,{color:'#0F6E56',weight:2,fillColor:'#1D9E75',fillOpacity:.1}).addTo(MAP);
+    });
+    MAP.on('dblclick',e=>{if(DIBUJ&&PTS.length>=3)cZona();});
+    rMarkers();rLeg();
+  },100);
+}
+
+function gMC(c){
+  if(MVISTA==='etapa')return EC[c.etapa]||'#888780';
+  if(MVISTA==='resp')return RC[c.resp]||'#888780';
+  const p=(c.prof||'').toLowerCase();
+  if(p.includes('vend')||p.includes('aten')||p.includes('comerci'))return'#1D9E75';
+  if(p.includes('emprend'))return'#185FA5';
+  if(p.includes('docente')||p.includes('maestra')||p.includes('profesor'))return'#854F0B';
+  if(p.includes('estudiante'))return'#888780';
+  return'#EF9F27';
+}
+
+function rMarkers(){
+  MMARKERS.forEach(m=>MAP.removeLayer(m));MMARKERS=[];
+  CANDS.forEach(c=>{
+    if(!c.lat||!c.lng)return;
+    const col=gMC(c);
+    const m=L.circleMarker([c.lat,c.lng],{radius:7,color:'rgba(255,255,255,.8)',weight:1.5,fillColor:col,fillOpacity:.88}).addTo(MAP);
+    m.bindPopup(`<div style="font-size:12px;min-width:165px;font-family:system-ui"><b style="display:block;margin-bottom:4px">${c.nombre}</b><div style="color:#666;margin-bottom:3px">${c.prof||''}</div><div>${c.barrio||''} · ${c.ciudad||''}</div><div>Tel: ${c.tel||'—'}</div>${c.comentario?`<div style="margin-top:5px;padding:4px 6px;background:#f5f5f0;border-radius:4px;font-size:11px">"${(c.comentario||'').substring(0,80)}"</div>`:''}${c.match>0?`<div style="margin-top:4px"><span style="background:#eeedfe;color:#534AB7;padding:2px 6px;border-radius:8px;font-size:10px">${c.match}% match</span></div>`:''}<div style="margin-top:5px"><span style="background:${EB[c.etapa]||'#f0f0f0'};color:${EC[c.etapa]||'#666'};padding:2px 7px;border-radius:8px;font-size:10px">${c.etapa||''}</span></div></div>`);
+    MMARKERS.push(m);
+  });
+  const el=document.getElementById('mst');
+  el.innerHTML=`<b style="display:block;margin-bottom:5px;font-size:12px">Gran Santa Fe</b><div style="font-size:11px;color:#666">Total: <b>${CANDS.length}</b></div>${ZONAS.length?`<div style="font-size:11px;color:#1D9E75">En zonas: <b>${CANDS.filter(c=>enZona(c)).length}</b></div>`:''}`;
+}
+
+function rLeg(){
+  const el=document.getElementById('mleg');
+  let it;
+  if(MVISTA==='etapa')it=ET.map(e=>`<div class="li"><div class="ld" style="background:${EC[e]}"></div><span>${e}</span></div>`).join('');
+  else if(MVISTA==='resp')it=Object.entries(RC).map(([k,v])=>`<div class="li"><div class="ld" style="background:${v}"></div><span>${k}</span></div>`).join('');
+  else it=[['#1D9E75','Ventas/Atención'],['#185FA5','Emprendedor'],['#854F0B','Docente'],['#888780','Estudiante'],['#EF9F27','Otros']].map(([c,l])=>`<div class="li"><div class="ld" style="background:${c}"></div><span>${l}</span></div>`).join('');
+  el.innerHTML=`<b style="display:block;margin-bottom:5px;font-size:11px">${MVISTA==='etapa'?'Etapas':MVISTA==='resp'?'Responsables':'Profesión'}</b>${it}`;
+}
+
+function smv(v,el){
+  MVISTA=v;
+  document.querySelectorAll('.seg button').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+  rMarkers();rLeg();
+}
+
+function tZona(){
+  DIBUJ=!DIBUJ;PTS=[];
+  if(PTL){MAP.removeLayer(PTL);PTL=null;}
+  const b=document.getElementById('btn-zona');
+  if(DIBUJ){b.style.background='#e1f5ee';b.style.color='#0F6E56';b.textContent='✓ Confirmar zona';MAP.getContainer().style.cursor='crosshair';}
+  else{if(PTS.length>=3)cZona();b.style.background='';b.style.color='';b.textContent='✏ Dibujar zona';if(MAP)MAP.getContainer().style.cursor='';}
+}
+
+function cZona(){
+  if(PTS.length<3)return;
+  if(PTL)MAP.removeLayer(PTL);
+  const cols=['#1D9E75','#185FA5','#534AB7','#854F0B','#EF9F27'];
+  const poly=L.polygon(PTS,{color:cols[ZONAS.length%cols.length],weight:2,fillOpacity:.08}).addTo(MAP);
+  poly.bindTooltip('Zona '+(ZONAS.length+1),{permanent:true,direction:'center',opacity:.7});
+  ZONAS.push(poly);PTS=[];PTL=null;DIBUJ=false;
+  const b=document.getElementById('btn-zona');b.style.background='';b.style.color='';b.textContent='✏ Dibujar zona';
+  if(MAP)MAP.getContainer().style.cursor='';
+  document.getElementById('zona-c').innerHTML=`${ZONAS.length} zona${ZONAS.length>1?'s':''} · <small>clic = punto · doble clic = cerrar</small>`;
+  rMarkers();
+}
+
+function bZonas(){
+  if(!ZONAS.length)return;
+  ZONAS.forEach(z=>MAP.removeLayer(z));ZONAS=[];
+  document.getElementById('zona-c').innerHTML=`0 zonas · <small>clic = punto · doble clic = cerrar</small>`;
+  rMarkers();
+}
+
+function enZona(c){
+  for(const z of ZONAS){
+    const pts=z.getLatLngs()[0];
+    let inside=false;
+    for(let i=0,j=pts.length-1;i<pts.length;j=i++){
+      if(((pts[i].lng>c.lng)!==(pts[j].lng>c.lng))&&(c.lat<(pts[j].lat-pts[i].lat)*(c.lng-pts[i].lng)/(pts[j].lng-pts[i].lng)+pts[i].lat))inside=!inside;
+    }
+    if(inside)return true;
+  }
+  return false;
+}
+
+// ============================================================
+//  TOQUES
+// ============================================================
+function getTH(){
+  const hoy=new Date();
+  const mmdd=String(hoy.getMonth()+1).padStart(2,'0')+'-'+String(hoy.getDate()).padStart(2,'0');
+  const r=[];
+  CANDS.forEach(c=>{
+    if(c.nacimiento&&String(c.nacimiento).substring(5)===mmdd)
+      r.push({c:c.nombre,tel:c.tel||'',m:'🎂 Cumpleaños',msg:`¡Feliz cumpleaños ${(c.nombre||'').split(' ')[0]}! 🎂 Todo el equipo de RE/MAX Faro te desea un día increíble.`});
+    FECHAS.forEach(f=>{
+      if(f.f===mmdd)r.push({c:c.nombre,tel:c.tel||'',m:`${f.e} ${f.n}`,msg:`${f.e} ¡Hola ${(c.nombre||'').split(' ')[0]}! En este ${f.n} te enviamos un saludo especial desde RE/MAX Faro.`});
+    });
+  });
+  return r;
+}
+
+function rToques(){
+  const cont=document.getElementById('toq-c');
+  if(TQTAB==='hoy'){
+    const t=getTH();
+    cont.innerHTML=t.length?t.map(tq=>`<div class="ti"><div style="flex:1"><b>${tq.c}</b> — ${tq.m}<br><span style="font-size:11px;color:#888">${tq.msg}</span></div><button class="btn-sm" onclick="aWA('${tq.tel}','${tq.msg.replace(/'/g,"\\'")}')">📲 Enviar WA</button></div>`).join(''):'<div style="color:#888;padding:24px;text-align:center;font-size:13px">🎉 No hay toques programados para hoy</div>';
+  } else if(TQTAB==='semana'){
+    const hoy=new Date(),prox=[];
+    for(let d=1;d<=7;d++){
+      const f=new Date(hoy.getTime()+d*86400000);
+      const mmdd=String(f.getMonth()+1).padStart(2,'0')+'-'+String(f.getDate()).padStart(2,'0');
+      const fdia=`${String(f.getDate()).padStart(2,'0')}/${String(f.getMonth()+1).padStart(2,'0')}`;
+      CANDS.forEach(c=>{
+        if(c.nacimiento&&String(c.nacimiento).substring(5)===mmdd)
+          prox.push({fecha:fdia,c:c.nombre,tel:c.tel||'',m:'🎂 Cumpleaños',msg:`¡Feliz cumpleaños ${(c.nombre||'').split(' ')[0]}! 🎂 Un abrazo de RE/MAX Faro.`});
+      });
+      FECHAS.forEach(ff=>{
+        if(ff.f===mmdd)prox.push({fecha:fdia,c:`${CANDS.length} candidatos`,tel:'',m:`${ff.e} ${ff.n}`,msg:''});
+      });
+    }
+    cont.innerHTML=prox.length?prox.map(tq=>`<div class="ti"><b style="background:#fff;padding:2px 7px;border-radius:4px;font-size:11px;flex-shrink:0">${tq.fecha}</b><div style="flex:1"><b>${tq.c}</b> — ${tq.m}</div>${tq.tel?`<button class="btn-sm" onclick="aWA('${tq.tel}','${tq.msg.replace(/'/g,"\\'")}')">📲</button>`:''}</div>`).join(''):'<div style="color:#888;padding:24px;text-align:center">Sin toques en los próximos 7 días</div>';
+  } else if(TQTAB==='cumplea'){
+    const cb=CANDS.filter(c=>c.nacimiento).sort((a,b)=>String(a.nacimiento).substring(5).localeCompare(String(b.nacimiento).substring(5)));
+    cont.innerHTML=cb.length?cb.map(c=>{const d=String(c.nacimiento).substring(5).split('-');return`<div class="ti"><div style="flex:1"><b>${c.nombre}</b> — ${c.edad||'?'} años<br><span style="color:#888">🎂 ${d[1]}/${d[0]}</span></div><button class="btn-sm" onclick="aWA('${c.tel||''}','¡Feliz cumpleaños ${(c.nombre||'').split(' ')[0]}! 🎂')">📲</button></div>`}).join(''):'<div style="color:#888;padding:24px;text-align:center">Ningún candidato tiene fecha de nacimiento cargada</div>';
+  } else {
+    cont.innerHTML=`<div style="margin-bottom:12px;font-size:13px;color:#666">Fechas que generan toques automáticos para todos los candidatos:</div>`+FECHAS.map(f=>`<div class="ti"><span style="font-size:20px;flex-shrink:0">${f.e}</span><div style="flex:1"><b>${f.n}</b><br><span style="color:#888;font-size:11px">${f.f}</span></div><span style="font-size:11px;color:#888">${CANDS.length} candidatos</span></div>`).join('');
+  }
+}
+
+function stTab(tab,el){
+  TQTAB=tab;
+  document.querySelectorAll('#v-toques .tab').forEach(t=>t.classList.remove('on'));
+  el.classList.add('on');
+  rToques();
+}
+
+function aWA(tel,msg){
+  if(!tel){toast('⚠ Sin número de teléfono');return;}
+  window.open('https://wa.me/54'+tel.replace(/\D/g,'')+'?text='+encodeURIComponent(msg),'_blank');
+}
+
+// ============================================================
+//  PERFIL IDEAL
+// ============================================================
+function rPerfil(){
+  document.getElementById('pi-desc').value=PI.desc;
+  rCrits();
+}
+
+function rCrits(){
+  document.getElementById('pi-crit').innerHTML=PI.criterios.map((c,i)=>`
+    <div class="flex" style="margin-bottom:7px;gap:7px">
+      <input type="number" min="0" max="100" value="${c.p}" id="pc-${i}" style="width:62px;text-align:center;font-size:12px" oninput="updSuma()">
+      <span style="font-size:11px;color:#888;flex-shrink:0">%</span>
+      <input type="text" value="${c.d}" id="pd-${i}" style="flex:1;font-size:12px">
+      <button class="btn-sm" onclick="delCrit(${i})" style="color:#E24B4A;border-color:#E24B4A;flex-shrink:0">✕</button>
+    </div>`).join('');
+  updSuma();
+}
+
+function updSuma(){
+  const s=PI.criterios.reduce((_,__,i)=>_+(parseInt(document.getElementById(`pc-${i}`)?.value)||0),0);
+  const el=document.getElementById('pi-suma');
+  el.textContent=`Suma: ${s}% ${s===100?'✓':'— debe ser 100'}`;
+  el.style.color=s===100?'#1D9E75':'#E24B4A';
+}
+
+function addCrit(){PI.criterios.push({d:'Nuevo criterio',p:10});rCrits();}
+function delCrit(i){PI.criterios.splice(i,1);rCrits();}
+
+async function guardarPerfil(){
+  PI.desc=document.getElementById('pi-desc').value;
+  PI.criterios=PI.criterios.map((_,i)=>({d:document.getElementById(`pd-${i}`).value,p:parseInt(document.getElementById(`pc-${i}`).value)||0}));
+  const s=PI.criterios.reduce((a,c)=>a+c.p,0);
+  if(s!==100){toast('⚠ Los pesos deben sumar exactamente 100%');return;}
+  await sb.from('perfil_ideal').update({descripcion:PI.desc,criterios:PI.criterios,updated_at:new Date()}).eq('id',1);
+  toast('✅ Perfil ideal guardado');
+}
+
+// ============================================================
+//  ESTADÍSTICAS
+// ============================================================
+function rEstad(){
+  const et={};ET.forEach(e=>{et[e]=CANDS.filter(c=>c.etapa===e).length});
+  document.getElementById('e-et').innerHTML=ET.map(e=>`<div class="brow"><div class="bl">${e}</div><div class="bt"><div class="bf" style="width:${CANDS.length?Math.round((et[e]||0)/CANDS.length*100):0}%;background:${EC[e]}"></div></div><div class="bv">${et[e]||0}</div></div>`).join('');
+  const ci={};
+  CANDS.forEach(c=>{const k=(c.ciudad||'').toLowerCase().includes('santo tom')?'Santo Tomé':(c.ciudad||'').toLowerCase().includes('recreo')?'Recreo':(c.ciudad||'').toLowerCase().includes('esperanza')?'Esperanza':(c.ciudad||'').toLowerCase().includes('justo')?'San Justo':'Santa Fe';ci[k]=(ci[k]||0)+1;});
+  const cM=Math.max(...Object.values(ci),1);
+  document.getElementById('e-ci').innerHTML=Object.entries(ci).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div class="brow"><div class="bl">${k}</div><div class="bt"><div class="bf" style="width:${Math.round(v/cM*100)}%;background:#534AB7"></div></div><div class="bv">${v}</div></div>`).join('');
+  const ca={};CANDS.forEach(c=>{ca[c.canal||'Web propia']=(ca[c.canal||'Web propia']||0)+1});
+  const caM=Math.max(...Object.values(ca),1);
+  document.getElementById('e-ca').innerHTML=Object.entries(ca).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div class="brow"><div class="bl">${k}</div><div class="bt"><div class="bf" style="width:${Math.round(v/caM*100)}%;background:#185FA5"></div></div><div class="bv">${v}</div></div>`).join('');
+  const ma=[[CANDS.filter(c=>c.match>=75).length,'Alto (75-100%)','#1D9E75'],[CANDS.filter(c=>c.match>=50&&c.match<75).length,'Medio (50-74%)','#EF9F27'],[CANDS.filter(c=>c.match>0&&c.match<50).length,'Bajo (1-49%)','#E24B4A'],[CANDS.filter(c=>!c.match||c.match===0).length,'Sin analizar','#888780']];
+  const maM=Math.max(...ma.map(x=>x[0]),1);
+  document.getElementById('e-ma').innerHTML=ma.map(([v,k,col])=>`<div class="brow"><div class="bl">${k}</div><div class="bt"><div class="bf" style="width:${Math.round(v/maM*100)}%;background:${col}"></div></div><div class="bv">${v}</div></div>`).join('');
+}
+
+// ============================================================
+//  CONFIG
+// ============================================================
+function loadCfg(){
+  const ig=localStorage.getItem('cfg-ig')||'';
+  const fb=localStorage.getItem('cfg-fb')||'';
+  if(ig)document.getElementById('lnk-ig').href=ig;
+  if(fb)document.getElementById('lnk-fb').href=fb;
+}
+
+function rCfg(){
+  document.getElementById('cfg-ig').value=localStorage.getItem('cfg-ig')||'';
+  document.getElementById('cfg-fb').value=localStorage.getItem('cfg-fb')||'';
+  document.getElementById('cfg-wa').value=localStorage.getItem('cfg-wa')||'';
+  document.getElementById('cfg-gf').value=localStorage.getItem('cfg-gf')||'';
+}
+
+function guardarCfg(){
+  ['cfg-ig','cfg-fb','cfg-wa','cfg-gf'].forEach(id=>localStorage.setItem(id,document.getElementById(id).value));
+  loadCfg();
+  toast('✅ Configuración guardada');
+}
+
+// ============================================================
+//  MODAL CANDIDATO — ABRIR
+// ============================================================
+function openNuevo(){
+  EID=null;CV=null;CV_DATA=null;
+  document.getElementById('mc-t').textContent='Nuevo candidato';
+  const flds=['f-nombre','f-tel','f-email','f-ciudad','f-barrio','f-prof','f-familia','f-ig','f-li','f-comentario','n-nota'];
+  flds.forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('f-nac').value='';document.getElementById('f-edad').value='';
+  document.getElementById('f-vehiculo').value='';document.getElementById('f-etapa').value='Nuevo ingreso';
+  document.getElementById('f-resp').value='Florencia';document.getElementById('f-canal').value='Web propia';
+  document.getElementById('notas-l').innerHTML='';
+  document.getElementById('match-r').classList.add('hidden');document.getElementById('match-c').classList.remove('hidden');
+  document.getElementById('cv-ind').classList.add('hidden');rCVUI();
+  setMT('datos',document.querySelector('#mc-tabs .tab'));
+  document.getElementById('m-cand').classList.remove('hidden');
+}
+
+async function openC(id){
+  const c=CANDS.find(x=>x.id===id);if(!c)return;
+  EID=id;CV=null;CV_DATA=null;
+  document.getElementById('mc-t').textContent=c.nombre;
+  const mp={nombre:c.nombre,tel:c.tel,email:c.email,ciudad:c.ciudad,barrio:c.barrio,prof:c.prof,familia:c.familia,ig:c.instagram,li:c.linkedin,comentario:c.comentario};
+  Object.entries(mp).forEach(([k,v])=>{const el=document.getElementById('f-'+k);if(el)el.value=v||'';});
+  document.getElementById('f-nac').value=c.nacimiento||'';
+  document.getElementById('f-edad').value=c.edad||'';
+  document.getElementById('f-vehiculo').value=c.vehiculo||'';
+  document.getElementById('f-etapa').value=c.etapa||'Nuevo ingreso';
+  document.getElementById('f-resp').value=c.resp||'Florencia';
+  document.getElementById('f-canal').value=c.canal||'Web propia';
+  // CV
+  if(c.cv_nombre){document.getElementById('cv-ind').classList.remove('hidden');simCVLoad(c.cv_nombre);}
+  else{document.getElementById('cv-ind').classList.add('hidden');rCVUI();}
+  // Notas
+  const{data:notas}=await sb.from('notas').select('*').eq('candidato_id',id).order('created_at',{ascending:false});
+  document.getElementById('notas-l').innerHTML=(notas||[]).map(n=>`<div class="nota-i"><div class="nota-m">${n.autor||'Usuario'} · ${new Date(n.created_at).toLocaleDateString('es-AR')}</div>${n.texto}</div>`).join('');
+  // Toques candidato
+  rToqCand(c);
+  // Match previo
+  if(c.match>0)showMatch(c.match,null);
+  setMT('datos',document.querySelector('#mc-tabs .tab'));
+  document.getElementById('m-cand').classList.remove('hidden');
+}
+
+function rToqCand(c){
+  const msgs=[
+    {m:'Primer contacto',msg:`Hola ${(c.nombre||'').split(' ')[0]}! Te contactamos desde RE/MAX Faro por tu consulta en nuestro formulario. ¿Tenés unos minutos para conversar?`},
+    {m:'🎂 Cumpleaños',msg:`¡Feliz cumpleaños ${(c.nombre||'').split(' ')[0]}! 🎂 Todo el equipo de RE/MAX Faro te desea un día increíble.`},
+    ...FECHAS.slice(0,4).map(f=>({m:`${f.e} ${f.n}`,msg:`${f.e} ¡Hola ${(c.nombre||'').split(' ')[0]}! En este ${f.n} te enviamos un saludo especial desde RE/MAX Faro.`})),
+    {m:'Invitación a entrevista',msg:`Hola ${(c.nombre||'').split(' ')[0]}, me comunico desde RE/MAX Faro. Revisamos tu consulta y nos gustaría coordinar una reunión para contarte sobre nuestra propuesta. ¿Tenés disponibilidad esta semana?`},
+    {m:'Seguimiento',msg:`Hola ${(c.nombre||'').split(' ')[0]}! ¿Cómo estás? Quería contactarte para ver si seguís interesado/a en sumarte al equipo de RE/MAX Faro. Cualquier consulta, acá estamos 🏠`},
+  ];
+  document.getElementById('toqc-l').innerHTML=msgs.map(t=>`<div class="ti"><div style="flex:1"><b>${t.m}</b><br><span style="font-size:11px;color:#888">${t.msg}</span></div><button class="btn-sm" onclick="aWA('${c.tel||''}','${t.msg.replace(/'/g,"\\'")}')">📲</button></div>`).join('');
+}
+
+async function guardarCand(){
+  const d={
+    nombre:document.getElementById('f-nombre').value?.trim(),
+    tel:document.getElementById('f-tel').value?.trim(),
+    email:document.getElementById('f-email').value?.trim(),
+    ciudad:document.getElementById('f-ciudad').value?.trim(),
+    barrio:document.getElementById('f-barrio').value?.trim(),
+    prof:document.getElementById('f-prof').value?.trim(),
+    edad:parseInt(document.getElementById('f-edad').value)||null,
+    nacimiento:document.getElementById('f-nac').value||null,
+    familia:document.getElementById('f-familia').value?.trim(),
+    vehiculo:document.getElementById('f-vehiculo').value,
+    instagram:document.getElementById('f-ig').value?.trim(),
+    linkedin:document.getElementById('f-li').value?.trim(),
+    comentario:document.getElementById('f-comentario').value?.trim(),
+    etapa:document.getElementById('f-etapa').value,
+    resp:document.getElementById('f-resp').value,
+    canal:document.getElementById('f-canal').value,
+    cv_nombre:CV_DATA?.name||null,
+    updated_at:new Date().toISOString()
+  };
+  if(!d.nombre){toast('⚠ El nombre es obligatorio');return;}
+  let err;
+  if(EID){({error:err}=await sb.from('candidatos').update(d).eq('id',EID));}
+  else{({error:err}=await sb.from('candidatos').insert({...d,match:0,lat:-31.63,lng:-60.70}));}
+  if(err){toast('❌ Error: '+err.message);return;}
+  cm('m-cand');toast('✅ Candidato guardado');await sync();
+}
+
+function cm(id){document.getElementById(id).classList.add('hidden');}
+
+function setMT(tab,el){
+  ['datos','cv','match','notas','toqc'].forEach(t=>document.getElementById('mt-'+t).classList.add('hidden'));
+  document.getElementById('mt-'+tab).classList.remove('hidden');
+  document.querySelectorAll('#mc-tabs .tab').forEach(t=>t.classList.remove('on'));
+  if(el)el.classList.add('on');
+}
+
+// ============================================================
+//  CV
+// ============================================================
+function rCVUI(){
+  document.getElementById('cv-up').classList.remove('hidden');
+  document.getElementById('cv-loaded').classList.add('hidden');
+}
+
+function hCVDrop(e){e.preventDefault();const f=e.dataTransfer.files[0];if(f)hCVFile(f);}
+
+function hCVFile(file){
+  if(!file)return;
+  if(file.size>10*1024*1024){toast('⚠ El archivo supera los 10MB');return;}
+  const r=new FileReader();
+  r.onload=ev=>{
+    CV_DATA={name:file.name,type:file.type,url:ev.target.result};
+    showCV(CV_DATA);
+    document.getElementById('cv-ind').classList.remove('hidden');
+  };
+  r.readAsDataURL(file);
+}
+
+function showCV(cv){
+  document.getElementById('cv-up').classList.add('hidden');
+  document.getElementById('cv-loaded').classList.remove('hidden');
+  document.getElementById('cv-fn').textContent=cv.name||'curriculum';
+  const v=document.getElementById('cv-view');
+  if(cv.url){
+    if(cv.type==='application/pdf'||cv.name.endsWith('.pdf'))v.innerHTML=`<iframe src="${cv.url}" style="width:100%;height:100%;border:none"></iframe>`;
+    else v.innerHTML=`<img src="${cv.url}" style="max-width:100%;max-height:100%;object-fit:contain;display:block;margin:auto;padding:8px">`;
+  }
+}
+
+function simCVLoad(nombre){
+  document.getElementById('cv-up').classList.add('hidden');
+  document.getElementById('cv-loaded').classList.remove('hidden');
+  document.getElementById('cv-fn').textContent=nombre;
+  document.getElementById('cv-view').innerHTML=`<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#888;gap:8px"><div style="font-size:32px">📄</div><div style="font-size:13px">${nombre}</div><div style="font-size:11px">Volvé a cargar el archivo para visualizarlo</div></div>`;
+}
+
+function ampCV(){
+  if(!CV_DATA)return;
+  document.getElementById('cv-amp-t').textContent=CV_DATA.name||'CV';
+  const c=document.getElementById('cv-amp-c');
+  if(CV_DATA.type==='application/pdf'||CV_DATA.name.endsWith('.pdf'))c.innerHTML=`<iframe src="${CV_DATA.url}" style="width:100%;height:100%;border:none"></iframe>`;
+  else c.innerHTML=`<img src="${CV_DATA.url}" style="max-width:100%;display:block;margin:auto;padding:16px">`;
+  document.getElementById('m-cv').classList.remove('hidden');
+}
+
+function dlCV(){
+  if(!CV_DATA)return;
+  const a=document.createElement('a');a.href=CV_DATA.url;a.download=CV_DATA.name||'cv';a.click();
+}
+
+function delCV(){
+  CV_DATA=null;rCVUI();document.getElementById('cv-ind').classList.add('hidden');
+}
+
+// ============================================================
+//  IA — ANÁLISIS CV
+// ============================================================
+async function analizarCV(){
+  if(!CV_DATA){toast('⚠ Cargá un CV primero');return;}
+  const btn=document.getElementById('btn-acv');
+  btn.disabled=true;btn.textContent='⏳ Analizando...';
+  document.getElementById('cv-ai-st').innerHTML='<span class="sp"></span> La IA está leyendo el CV y procesando los datos...';
+  try{
+    const critT=PI.criterios.map(c=>`- ${c.d} (${c.p}%)`).join('\n');
+    const b64=CV_DATA.url.split(',')[1];
+    const isPDF=CV_DATA.type==='application/pdf'||CV_DATA.name.endsWith('.pdf');
+    const fb=isPDF?{type:'document',source:{type:'base64',media_type:'application/pdf',data:b64}}:{type:'image',source:{type:'base64',media_type:CV_DATA.type,data:b64}};
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:[fb,{type:'text',text:`Sos un especialista en RRHH para RE/MAX Faro, Santa Fe, Argentina.\nAnalizá este CV para el puesto de gestor comercial inmobiliario.\n\nPerfil ideal: ${PI.desc}\n\nCriterios:\n${critT}\n\nExtraé todos los datos disponibles. Respondé SOLO en JSON válido sin backticks:\n{"nombre":"","email":"","tel":"","prof":"","ciudad":"","barrio":"","familia":"","vehiculo":"","porcentaje":0,"fortalezas":[""],"alertas":[""],"recomendacion":""}`}]}]})});
+    const data=await res.json();
+    const txt=data.content.map(i=>i.text||'').join('').replace(/```json|```/g,'').trim();
+    const r=JSON.parse(txt);
+    const mp={nombre:'f-nombre',email:'f-email',tel:'f-tel',prof:'f-prof',ciudad:'f-ciudad',barrio:'f-barrio',familia:'f-familia'};
+    Object.entries(mp).forEach(([k,id])=>{if(r[k]&&!document.getElementById(id).value)document.getElementById(id).value=r[k];});
+    if(r.vehiculo)document.getElementById('f-vehiculo').value=r.vehiculo;
+    if(EID)await sb.from('candidatos').update({match:r.porcentaje}).eq('id',EID);
+    document.getElementById('cv-ai-st').innerHTML=`✅ <b>CV analizado</b> — Datos completados automáticamente · Match: <b>${r.porcentaje}%</b>`;
+    btn.textContent='✅ Analizado';
+    showMatch(r.porcentaje,r);
+    toast(`✅ CV analizado — ${r.porcentaje}% compatibilidad`);
+  }catch(e){
+    console.error(e);
+    document.getElementById('cv-ai-st').innerHTML='❌ Error al analizar. Verificá que el archivo sea legible.';
+    btn.disabled=false;btn.textContent='🔍 Reintentar';
+  }
+}
+
+// ============================================================
+//  IA — MATCH MANUAL
+// ============================================================
+async function analizarManual(){
+  const nombre=document.getElementById('f-nombre').value||'?';
+  const prof=document.getElementById('f-prof').value||'?';
+  const comentario=document.getElementById('f-comentario').value||'';
+  const familia=document.getElementById('f-familia').value||'';
+  const vehiculo=document.getElementById('f-vehiculo').value||'';
+  document.getElementById('match-c').innerHTML='<div style="text-align:center;padding:20px"><span class="sp"></span> Analizando con IA...</div>';
+  try{
+    const critT=PI.criterios.map(c=>`- ${c.d} (${c.p}%)`).join('\n');
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:700,messages:[{role:'user',content:`Evaluá este candidato para gestor comercial inmobiliario de RE/MAX Faro, Santa Fe, Argentina.\nNombre: ${nombre}\nProfesión: ${prof}\nGrupo familiar: ${familia}\nVehículo: ${vehiculo}\nComentario: ${comentario}\n\nPerfil ideal: ${PI.desc}\nCriterios:\n${critT}\n\nRespondé SOLO en JSON sin backticks:\n{"porcentaje":0,"fortalezas":[""],"alertas":[""],"recomendacion":""}`}]})});
+    const data=await res.json();
+    const r=JSON.parse(data.content.map(i=>i.text||'').join('').replace(/```json|```/g,'').trim());
+    if(EID)await sb.from('candidatos').update({match:r.porcentaje}).eq('id',EID);
+    document.getElementById('match-c').classList.add('hidden');
+    showMatch(r.porcentaje,r);
+  }catch(e){
+    document.getElementById('match-c').innerHTML='<div style="color:#E24B4A;padding:10px;font-size:12px">Error al analizar.</div><button class="btn-p" onclick="analizarManual()">Reintentar</button>';
+  }
+}
+
+function showMatch(pct,r){
+  const col=pct>=75?'#1D9E75':pct>=50?'#EF9F27':'#E24B4A';
+  document.getElementById('match-r').innerHTML=`
+    <div style="text-align:center;margin-bottom:16px">
+      <div style="font-size:52px;font-weight:700;color:${col}">${pct}%</div>
+      <div style="font-size:12px;color:#888">compatibilidad con el perfil ideal de RE/MAX Faro</div>
+      <div class="mb-bar"><div class="mb-fill" style="width:${pct}%;background:${col}"></div></div>
+    </div>
+    ${r?`<div class="g2" style="margin-bottom:12px">
+      <div style="background:#eaf3de;border-radius:7px;padding:10px">
+        <div style="font-size:11px;font-weight:600;color:#1D9E75;margin-bottom:6px">✓ Fortalezas</div>
+        ${(r.fortalezas||[]).filter(Boolean).map(f=>`<div style="font-size:12px;color:#1D9E75;margin-bottom:3px">+ ${f}</div>`).join('')}
+      </div>
+      <div style="background:#faeeda;border-radius:7px;padding:10px">
+        <div style="font-size:11px;font-weight:600;color:#854F0B;margin-bottom:6px">⚠ Alertas</div>
+        ${(r.alertas||[]).filter(Boolean).map(a=>`<div style="font-size:12px;color:#854F0B;margin-bottom:3px">⚠ ${a}</div>`).join('')}
+      </div>
+    </div>
+    <div style="background:#e6f1fb;border-radius:7px;padding:10px;font-size:12px;color:#185FA5">
+      <b>Recomendación:</b> ${r.recomendacion}
+    </div>`:''}`;
+  document.getElementById('match-r').classList.remove('hidden');
+}
+
+// ============================================================
+//  NOTAS
+// ============================================================
+async function addNota(){
+  const txt=document.getElementById('n-nota').value?.trim();
+  if(!txt){toast('⚠ Escribí la nota');return;}
+  if(EID){
+    await sb.from('notas').insert({candidato_id:EID,texto:txt,autor:'Usuario'});
+    const{data}=await sb.from('notas').select('*').eq('candidato_id',EID).order('created_at',{ascending:false});
+    document.getElementById('notas-l').innerHTML=(data||[]).map(n=>`<div class="nota-i"><div class="nota-m">${n.autor||'Usuario'} · ${new Date(n.created_at).toLocaleDateString('es-AR')}</div>${n.texto}</div>`).join('');
+    toast('✅ Nota guardada');
+  }
+  document.getElementById('n-nota').value='';
+}
+
+// ============================================================
+//  RLS — POLICY (necesario para que la anon key pueda leer/escribir)
+// ============================================================
+// Las políticas RLS se configuran en Supabase. La app funciona con la anon key
+// y las políticas por defecto de "ejecutar y habilitar RLS" del wizard.
+
+// ============================================================
+//  ARRANCAR
+// ============================================================
+init();
+</script>
+</body>
+</html>
